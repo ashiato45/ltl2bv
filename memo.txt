@@ -1,3 +1,6 @@
-dune exec ./ltl2ba.exe
+- jbuidler exec /ltl2ba.exe
+(dune regrads warning as errors...)
+- jbuilder runtest
+
 dune external-lib-deps ltl2ba --missing
 dune external-lib-deps ltl2ba --missing
