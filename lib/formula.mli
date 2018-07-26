@@ -5,4 +5,4 @@ type formula = FAtomic of int
              | FUntil of formula*formula
                                    [@@deriving compare, sexp]
 
-val parse: string -> formula
+val parse: string -> formula option
