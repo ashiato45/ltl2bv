@@ -1,0 +1,10 @@
+(libraries
+ (name mylib)
+ (libraries core sexplib)
+ (inline_tests)
+ (preprocess (pps ppx_jane ppx_inline_test ppx_expect))
+ )	     
+(env
+ (dev
+  (flags (:standard -w +a-4-6-7-9-27-29-32..42-44-45-48-50-60)))
+)
