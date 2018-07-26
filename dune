@@ -1,9 +1,0 @@
-(executable
- (name ltl2ba)
- (libraries core sexplib)
- (preprocess (pps ppx_jane))
- )
-(env
- (dev
-  (flags (:standard -w -26)))
-)
