@@ -6,3 +6,5 @@ type formula = FAtomic of int
                                    [@@deriving compare, sexp]
 
 val parse: string -> formula option
+val get_subformulae: formula -> formula list
+val reduce_doublenegs: formula -> formula

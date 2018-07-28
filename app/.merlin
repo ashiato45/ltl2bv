@@ -66,5 +66,5 @@ S /home/ashiato45/.opam/4.06.1/lib/typerep
 S /home/ashiato45/.opam/4.06.1/lib/variantslib
 S .
 S ../lib
-FLG -ppx '/home/ashiato45/repo/ltl2ba/_build/default/.ppx/ppx_jane/ppx.exe --as-ppx'
+FLG -ppx '/home/ashiato45/repo/ltl2bv/_build/default/.ppx/ppx_jane/ppx.exe --as-ppx'
 FLG -w -40

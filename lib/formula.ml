@@ -87,3 +87,47 @@ let%expect_test "parse3" =
 [%expect {| ((FNext(FAnd(FAtomic 3)(FAtomic 2)))) |}]  
     
 
+let get_subformulae fml_ =
+  let res = ref [] in
+  let rec help fml_ =
+    res := fml_::!res;
+    match fml_ with
+    | FAtomic _ -> ()
+    | FAnd (f1, f2) -> (
+      help f1;
+      help f2;
+    );
+    | FNot f -> help f;
+    | FNext f -> help f;
+    | FUntil (f1, f2) -> (help f1; help f2) in
+  help fml_;
+  !res
+let%expect_test "get_subformulae1" =
+  "p2" |> parse |> Option.value_exn |> get_subformulae |> [%sexp_of: formula list] |> Sexp.to_string |> print_endline;
+  [%expect {| ((FAtomic 2)) |}]
+let%expect_test "get_subformulae2" =
+  "p2 p3 & X" |> parse |> Option.value_exn |> get_subformulae |> [%sexp_of: formula list] |> Sexp.to_string |> print_endline;
+  [%expect {| ((FAtomic 2)(FAtomic 3)(FAnd(FAtomic 3)(FAtomic 2))(FNext(FAnd(FAtomic 3)(FAtomic 2)))) |}]
+                      
+
+let rec reduce_doublenegs fml_ =
+  match fml_ with
+  | FNot (FNot f) -> reduce_doublenegs f
+  | FAtomic n -> FAtomic n
+  | FAnd (f1, f2) -> FAnd (reduce_doublenegs f1, reduce_doublenegs f2)
+  | FNot f -> FNot (reduce_doublenegs f)
+  | FNext f -> FNext (reduce_doublenegs f)
+  | FUntil (f1, f2) -> FUntil (reduce_doublenegs f1, reduce_doublenegs f2)
+let%expect_test "reduce_doublenegs1" =
+  "p2" |> parse |> Option.value_exn |> reduce_doublenegs |> [%sexp_of: formula] |> Sexp.to_string |> print_endline;
+  [%expect {| (FAtomic 2) |}]
+let%expect_test "reduce_doublenegs2" =
+  "p2 !" |> parse |> Option.value_exn |> reduce_doublenegs |> [%sexp_of: formula] |> Sexp.to_string |> print_endline;
+  [%expect {| (FNot(FAtomic 2)) |}]
+let%expect_test "reduce_doublenegs3" =
+  "p2 ! !" |> parse |> Option.value_exn |> reduce_doublenegs |> [%sexp_of: formula] |> Sexp.to_string |> print_endline;
+  [%expect {| (FAtomic 2) |}]
+let%expect_test "reduce_doublenegs4" =
+  "p2 ! ! p3 ! & X" |> parse |> Option.value_exn |> reduce_doublenegs |> [%sexp_of: formula] |> Sexp.to_string |> print_endline;
+  [%expect {| (FNext(FAnd(FNot(FAtomic 3))(FAtomic 2))) |}]
+          
