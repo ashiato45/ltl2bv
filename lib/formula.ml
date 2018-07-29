@@ -1,4 +1,5 @@
 open Core
+open Set
 
 type formula = FAtomic of int
              | FAnd of formula*formula
@@ -6,6 +7,15 @@ type formula = FAtomic of int
              | FNext of formula
              | FUntil of formula*formula
                                    [@@deriving compare, sexp]
+
+
+module Formula = struct
+  type t = formula
+  let compare = compare_formula
+  let t_of_sexp = formula_of_sexp
+  let sexp_of_t = sexp_of_formula
+end
+module FormulaSet = Set.Make(Formula)
 
 
 let parse txt_ =
@@ -131,3 +141,11 @@ let%expect_test "reduce_doublenegs4" =
   "p2 ! ! p3 ! & X" |> parse |> Option.value_exn |> reduce_doublenegs |> [%sexp_of: formula] |> Sexp.to_string |> print_endline;
   [%expect {| (FNext(FAnd(FNot(FAtomic 3))(FAtomic 2))) |}]
           
+let gen_states_for_aba fml_ =
+  let pos = fml_ |> get_subformulae in
+  let neg = pos |> List.map ~f:(fun x -> FNot x) in
+  let res = (List.append pos neg) |> List.map ~f:reduce_doublenegs |> FormulaSet.of_list in
+  res
+let%expect_test "gen_states_for_aba1" =
+  "p2 !" |> parse |> Option.value_exn |> gen_states_for_aba |> FormulaSet.to_list |> [%sexp_of: formula list] |> Sexp.to_string |> print_endline;
+  [%expect {| ((FAtomic 2)(FNot(FAtomic 2))) |}]  
