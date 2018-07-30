@@ -1,6 +1,7 @@
 open Core
 open Set
 
+
 type formula = FAtomic of int
              | FAnd of formula*formula
              | FNot of formula
@@ -9,6 +10,7 @@ type formula = FAtomic of int
                                    [@@deriving compare, sexp]
 
 
+module AlphSet = Set.Make(Int)
 module Formula = struct
   type t = formula
   let compare = compare_formula
@@ -149,3 +151,11 @@ let gen_states_for_aba fml_ =
 let%expect_test "gen_states_for_aba1" =
   "p2 !" |> parse |> Option.value_exn |> gen_states_for_aba |> FormulaSet.to_list |> [%sexp_of: formula list] |> Sexp.to_string |> print_endline;
   [%expect {| ((FAtomic 2)(FNot(FAtomic 2))) |}]  
+
+module type LTLABA = Aba.ABA
+  with type ast = AlphSet.t
+  with type sst = FormulaSet.t
+  with type aset = AlphSet.Elt.t
+  with type sset = FormulaSet.t
+                     
+module LtlAba = Aba.Make (AlphSet) (FormulaSet)
