@@ -21,10 +21,10 @@ val gen_states_for_aba: formula -> FormulaSet.t
 
 (* module type LtlAba = (Aba.MAKE (AlphSet) (StateSet)) *)
 module type LTLABA = Aba.ABA
-  with type ast = AlphSet.t
-  with type sst = FormulaSet.t
-  with type aset = AlphSet.Elt.t
-  with type sset = FormulaSet.t
+  with module AlphSet = AlphSet
+  with module StateSet = FormulaSet
+
+module LtlAba : LTLABA
 
 
 

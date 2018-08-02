@@ -6,29 +6,23 @@ type 'a altFormula = AFTrue
                    | AFAnd
                    | AFOr
 module type ABA = sig
-  type ast
-  type sst
-  type aset
-  type sset
+  module AlphSet: Set.S
+  module StateSet: Set.S
   type t = {
-      alph: ast;
-      states: sst;
-      trans: sset -> aset -> sset altFormula;
-      init: sset;
-      final: sst}
+      alph: AlphSet.t;
+      states: StateSet.t;
+      trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.Elt.t altFormula;
+      init: StateSet.Elt.t;
+      final: StateSet.t}
 end
 
 module type MAKE = functor (AlphSet: Set.S) (StateSet: Set.S) -> ABA 
-                                                                 with type ast = AlphSet.t 
-                                                                 with type sst = StateSet.t
-                                                                 with type aset = AlphSet.Elt.t
-                                                                 with type sset = StateSet.Elt.t
+                                                                 with module AlphSet = AlphSet
+                                                                 with module StateSet = StateSet
 
 module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
-                 type ast = AlphSet.t
-                 type sst = StateSet.t
-                 type aset = AlphSet.Elt.t
-                 type sset = StateSet.Elt.t
+                 module AlphSet = AlphSet
+                 module StateSet = StateSet
                  type t = {
                      alph: AlphSet.t;
                      states: StateSet.t;

@@ -153,9 +153,7 @@ let%expect_test "gen_states_for_aba1" =
   [%expect {| ((FAtomic 2)(FNot(FAtomic 2))) |}]  
 
 module type LTLABA = Aba.ABA
-  with type ast = AlphSet.t
-  with type sst = FormulaSet.t
-  with type aset = AlphSet.Elt.t
-  with type sset = FormulaSet.t
+  with module AlphSet = AlphSet
+  with module StateSet = FormulaSet
                      
 module LtlAba = Aba.Make (AlphSet) (FormulaSet)
