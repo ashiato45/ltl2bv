@@ -10,7 +10,9 @@ type formula = FAtomic of int
                                    [@@deriving compare, sexp]
 
 
-module AlphSet = Set.Make(Int)
+                                   
+module PropSet = Set.Make(Int)
+module AlphSet = Set.Make(PropSet)
 module Formula = struct
   type t = formula
   let compare = compare_formula
@@ -157,3 +159,50 @@ module type LTLABA = Aba.ABA
   with module StateSet = FormulaSet
                      
 module LtlAba = Aba.Make (AlphSet) (FormulaSet)
+
+let rec power_list lst =
+  let rec help lst acc =
+    match lst with
+    | [] -> acc
+    | x::xs -> (
+      let yes = acc |> List.map ~f:(fun ys -> x::ys) in
+      let no = acc in
+      help xs (List.append yes no)
+    )
+  in
+  help lst [[]]
+
+let formula_to_aba fml_ =
+  let rec take_bar affml_ =
+    let open Aba in
+    match affml_ with
+    | AFAtomic a -> AFAtomic (a |> (fun x -> FNot x) |> reduce_doublenegs)
+    | AFTrue -> AFTrue
+    | AFFalse -> AFFalse
+    | AFAnd (a, b) -> AFOr (take_bar a, take_bar b)
+    | AFOr (a, b) -> AFAnd (take_bar a, take_bar b)
+  in
+  let states = gen_states_for_aba fml_ in
+  let props = states
+             |> PropSet.filter_map ~f:(fun fml ->
+                    match fml with
+                    | FAtomic n -> Some n
+                    | otherwise -> None
+                  ) in
+  let alphs = props |> PropSet.to_list |> power_list |> List.map ~f:(PropSet.of_list) |> AlphSet.of_list in
+  let init = fml_ in
+  let final = states |> FormulaSet.filter ~f:(fun fml ->
+                            match fml with
+                            | FNot (FUntil (a, b)) -> true
+                            | otherwise -> false
+                          ) in
+  let rec trans s a =
+    let open Aba in
+    match s with
+    | FAtomic n -> if (PropSet.mem a n) then AFTrue else AFFalse
+    | FAnd (s1, s2) -> AFAnd (trans s1 a, trans s2 a)
+    | FNot s -> take_bar (trans s a)
+    | FNext s -> AFAtomic s
+    | FUntil (xi, psi) -> AFOr (trans psi a, AFAnd (trans xi a, (AFAtomic (FUntil (xi, psi))))) in
+  let res = {LtlAba.alph = alphs; LtlAba.states = states; LtlAba.trans = trans; LtlAba.init = init; LtlAba.final = final} in
+  res

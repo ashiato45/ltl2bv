@@ -10,7 +10,8 @@ type formula = FAtomic of int
                                    [@@deriving compare, sexp]
 
 (* module FormulaSet: Set.S (\* OK *\) *)
-module AlphSet: Set.S with type Elt.t = int
+module PropSet: Set.S with type Elt.t = int
+module AlphSet: Set.S with type Elt.t = PropSet.t
 module FormulaSet: Set.S with type Elt.t = formula 
 (* module FormulaSet: Set.S with type Elt.t = int | does not work! *)
 
@@ -26,5 +27,6 @@ module type LTLABA = Aba.ABA
 
 module LtlAba : LTLABA
 
+val formula_to_aba: formula -> LtlAba.t
 
 

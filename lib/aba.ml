@@ -1,10 +1,14 @@
 open Core
 open Set
 
-type 'a altFormula = AFTrue
-                   | AFFalse
-                   | AFAnd
-                   | AFOr
+
+type 'a altFormula =
+  | AFAtomic of 'a
+  | AFTrue
+  | AFFalse
+  | AFAnd of 'a altFormula*'a altFormula
+  | AFOr of 'a altFormula*'a altFormula
+
 module type ABA = sig
   module AlphSet: Set.S
   module StateSet: Set.S
