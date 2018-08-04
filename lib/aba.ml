@@ -18,11 +18,33 @@ module type ABA = sig
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.Elt.t altFormula;
       init: StateSet.Elt.t;
       final: StateSet.t}
+
+
+  module type TOBEUCHI' = sig
+    module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
+    module Beuchi: Beuchi.BEUCHI
+           with module StateSet = BeuchiStateSet
+           with module AlphSet = AlphSet
+                                    
+    val convert: t -> Beuchi.t
+  end
+
+  module type TOBEUCHI = functor (BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t)
+                                   (Beuchi: Beuchi.BEUCHI with module StateSet = BeuchiStateSet
+                                    with module AlphSet = AlphSet) ->
+                         TOBEUCHI'
+                         with module BeuchiStateSet = BeuchiStateSet
+                         with module Beuchi = Beuchi
+  module ToBeuchi: TOBEUCHI
+
 end
 
 module type MAKE = functor (AlphSet: Set.S) (StateSet: Set.S) -> ABA 
                                                                  with module AlphSet = AlphSet
                                                                  with module StateSet = StateSet
+
+
+                                                                                          
 
 module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                  module AlphSet = AlphSet
@@ -33,4 +55,39 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                      trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.Elt.t altFormula;
                      init: StateSet.Elt.t;
                      final: StateSet.t}
-                            end: MAKE)
+
+  module type TOBEUCHI' = sig
+    module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
+    module Beuchi: Beuchi.BEUCHI
+           with module StateSet = BeuchiStateSet
+           with module AlphSet = AlphSet
+                                    
+    val convert: t -> Beuchi.t
+  end
+
+  module type TOBEUCHI = functor (BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t)
+                                   (Beuchi: Beuchi.BEUCHI with module StateSet = BeuchiStateSet
+                                    with module AlphSet = AlphSet) ->
+                         TOBEUCHI'
+                         with module BeuchiStateSet = BeuchiStateSet
+                         with module Beuchi = Beuchi
+
+                 module ToBeuchi = functor (BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t)
+                                                  (Beuchi: Beuchi.BEUCHI with module StateSet = BeuchiStateSet
+                                                   with module AlphSet = AlphSet) -> struct
+                                     module BeuchiStateSet = BeuchiStateSet
+                                     module Beuchi = Beuchi
+                                     let convert aba_ =
+                                       let alph = aba_.alph in
+                                       let two_s = aba_.states
+                                                   |> StateSet.to_list
+                                                   |> Util.power_list
+                                                   |> List.map ~f:StateSet.of_list in
+                                       let states = Util.make_pairs two_s two_s |> BeuchiStateSet.of_list in
+                                       let trans (s1, s2) a = BeuchiStateSet.empty in (* temp *)
+                                       let init = (StateSet.empty, StateSet.empty) in
+                                       let final = BeuchiStateSet.empty in
+                                       {Beuchi.alph=alph; states=states; trans=trans; init=init; final=final}
+                                   end
+               end: MAKE)
+

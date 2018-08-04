@@ -160,17 +160,6 @@ module type LTLABA = Aba.ABA
                      
 module LtlAba = Aba.Make (AlphSet) (FormulaSet)
 
-let rec power_list lst =
-  let rec help lst acc =
-    match lst with
-    | [] -> acc
-    | x::xs -> (
-      let yes = acc |> List.map ~f:(fun ys -> x::ys) in
-      let no = acc in
-      help xs (List.append yes no)
-    )
-  in
-  help lst [[]]
 
 let formula_to_aba fml_ =
   let rec take_bar affml_ =
@@ -189,7 +178,7 @@ let formula_to_aba fml_ =
                     | FAtomic n -> Some n
                     | otherwise -> None
                   ) in
-  let alphs = props |> PropSet.to_list |> power_list |> List.map ~f:(PropSet.of_list) |> AlphSet.of_list in
+  let alphs = props |> PropSet.to_list |> Util.power_list |> List.map ~f:(PropSet.of_list) |> AlphSet.of_list in
   let init = fml_ in
   let final = states |> FormulaSet.filter ~f:(fun fml ->
                             match fml with
