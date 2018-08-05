@@ -21,7 +21,7 @@ module type ABA = sig
       init: StateSet.Elt.t;
       final: StateSet.t}
 
-  val is_valid: AlphSet.Elt.t altFormula -> AlphSet.t -> bool             
+  val is_valid: StateSet.Elt.t altFormula -> StateSet.t -> bool             
 
   module type TOBEUCHI' = sig
     module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
@@ -61,7 +61,7 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
 
                  let rec is_valid fml_ assg_ =
                    match fml_ with
-                   | AFAtomic x -> AlphSet.mem assg_ x
+                   | AFAtomic x -> StateSet.mem assg_ x
                    | AFTrue -> true
                    | AFFalse -> false
                    | AFAnd (x, y) -> (is_valid x assg_) && (is_valid y assg_)
@@ -89,6 +89,7 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                                                    with module AlphSet = AlphSet) -> struct
                                      module BeuchiStateSet = BeuchiStateSet
                                      module Beuchi = Beuchi
+                                                       
                                      let convert aba_ =
                                        let alph = aba_.alph in
                                        let two_s = aba_.states
@@ -96,9 +97,40 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                                                    |> Util.power_list
                                                    |> List.map ~f:StateSet.of_list in
                                        let states = Util.make_pairs two_s two_s |> BeuchiStateSet.of_list in
-                                       let trans (s1, s2) a = BeuchiStateSet.empty in (* temp *)
-                                       let init = (StateSet.empty, StateSet.empty) in
-                                       let final = BeuchiStateSet.empty in
+                                       let trans (u, v) a =
+                                         let cond xy =
+                                           u
+                                           |> StateSet.to_list
+                                           |> List.map ~f:(fun t ->
+                                                  aba_.trans t a)
+                                           |> List.for_all ~f:(fun afml_ -> is_valid afml_ xy) in
+                                         if StateSet.is_empty u then (
+                                           states
+                                           |> BeuchiStateSet.filter ~f:(fun (x, y) ->
+                                                  let ycond = cond y in
+                                                  ycond
+                                                )
+                                           |> BeuchiStateSet.map ~f:(fun (x, y) ->
+                                                  let u'= StateSet.diff y aba_.final in
+                                                  let v' = StateSet.inter y aba_.final in
+                                                  (u', v')
+                                                )
+                                         ) else (
+                                           states
+                                           |> BeuchiStateSet.filter ~f:(fun (x, y) ->
+                                                  let xcond = cond x in
+                                                  let ycond = cond y in
+                                                  xcond && ycond
+                                                )
+                                           |> BeuchiStateSet.map ~f:(fun (x, y) ->
+                                                  let u' = StateSet.diff x aba_.final in
+                                                  let v' = StateSet.union y (StateSet.inter x aba_.final) in
+                                                  (u', v')
+                                                )
+                                         )
+                                       in 
+                                       let init = (StateSet.singleton aba_.init, StateSet.empty) in
+                                       let final = two_s |> List.map ~f:(fun x -> (StateSet.empty, x)) |> BeuchiStateSet.of_list in
                                        {Beuchi.alph=alph; states=states; trans=trans; init=init; final=final}
                                    end
                end: MAKE)

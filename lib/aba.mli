@@ -19,7 +19,7 @@ module type ABA = sig
       init: StateSet.Elt.t;
       final: StateSet.t}
 
-  val is_valid: AlphSet.Elt.t altFormula -> AlphSet.t -> bool
+  val is_valid: StateSet.Elt.t altFormula -> StateSet.t -> bool
              
   module type TOBEUCHI' = sig
     module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
