@@ -9,6 +9,8 @@ type 'a altFormula =
   | AFAnd of 'a altFormula*'a altFormula
   | AFOr of 'a altFormula*'a altFormula
 
+                             
+
 module type ABA = sig
   module AlphSet: Set.S
   module StateSet: Set.S
@@ -19,6 +21,7 @@ module type ABA = sig
       init: StateSet.Elt.t;
       final: StateSet.t}
 
+  val is_valid: AlphSet.Elt.t altFormula -> AlphSet.t -> bool             
 
   module type TOBEUCHI' = sig
     module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
@@ -55,6 +58,15 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                      trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.Elt.t altFormula;
                      init: StateSet.Elt.t;
                      final: StateSet.t}
+
+                 let rec is_valid fml_ assg_ =
+                   match fml_ with
+                   | AFAtomic x -> AlphSet.mem assg_ x
+                   | AFTrue -> true
+                   | AFFalse -> false
+                   | AFAnd (x, y) -> (is_valid x assg_) && (is_valid y assg_)
+                   | AFOr (x, y) -> (is_valid x assg_) || (is_valid y assg_)
+                         
 
   module type TOBEUCHI' = sig
     module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t

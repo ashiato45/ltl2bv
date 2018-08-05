@@ -7,6 +7,8 @@ type 'a altFormula =
   | AFFalse
   | AFAnd of 'a altFormula*'a altFormula
   | AFOr of 'a altFormula*'a altFormula
+
+                             
 module type ABA = sig
   module AlphSet: Set.S
   module StateSet: Set.S
@@ -16,6 +18,8 @@ module type ABA = sig
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.Elt.t altFormula;
       init: StateSet.Elt.t;
       final: StateSet.t}
+
+  val is_valid: AlphSet.Elt.t altFormula -> AlphSet.t -> bool
              
   module type TOBEUCHI' = sig
     module BeuchiStateSet: Set.S with type Elt.t = StateSet.t * StateSet.t
