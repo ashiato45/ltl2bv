@@ -29,4 +29,18 @@ module LtlAba : LTLABA
 
 val formula_to_aba: formula -> LtlAba.t
 
+module type BEUCHISTATE = sig
+  type t = FormulaSet.t * FormulaSet.t
+  val sexp_of_t: t -> Sexp.t
+  val t_of_sexp: Sexp.t -> t
+end
+module BeuchiState: BEUCHISTATE
+module BeuchiStateSet: Set.S with type Elt.t = FormulaSet.t * FormulaSet.t
+module Beuchi: Beuchi.BEUCHI with module StateSet = BeuchiStateSet
+       with module AlphSet = AlphSet
+module ToBeuchi: LtlAba.TOBEUCHI'
+       with module BeuchiStateSet = BeuchiStateSet
+       with module Beuchi = Beuchi
 
+val aba_to_beuchi: LtlAba.t -> Beuchi.t
+val formula_to_beuchi: formula -> Beuchi.t                                

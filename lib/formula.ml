@@ -195,3 +195,22 @@ let formula_to_aba fml_ =
     | FUntil (xi, psi) -> AFOr (trans psi a, AFAnd (trans xi a, (AFAtomic (FUntil (xi, psi))))) in
   let res = {LtlAba.alph = alphs; LtlAba.states = states; LtlAba.trans = trans; LtlAba.init = init; LtlAba.final = final} in
   res
+
+module type BEUCHISTATE = sig
+  type t = FormulaSet.t * FormulaSet.t
+  val sexp_of_t: t -> Sexp.t
+  val t_of_sexp: Sexp.t -> t
+end
+module BeuchiState = struct
+  type t = FormulaSet.t * FormulaSet.t
+  let sexp_of_t = [%sexp_of: FormulaSet.t * FormulaSet.t]
+  let t_of_sexp = [%of_sexp: FormulaSet.t * FormulaSet.t]
+  let compare = [%compare: FormulaSet.t * FormulaSet.t]
+end
+module BeuchiStateSet = Set.Make(BeuchiState)
+module Beuchi = Beuchi.Make (AlphSet) (BeuchiStateSet)
+module ToBeuchi = LtlAba.ToBeuchi (BeuchiStateSet) (Beuchi)
+
+let aba_to_beuchi aba_ = ToBeuchi.convert aba_
+
+let formula_to_beuchi fml_ = fml_ |> formula_to_aba |> aba_to_beuchi
