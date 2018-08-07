@@ -10,7 +10,7 @@ module type BEUCHI = sig
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
       init: StateSet.t;
       final: StateSet.t}
-  val to_dot: t -> string             
+  val to_dot: Stdio.Out_channel.t -> t -> unit
 end
 
 module type MAKE = functor (AlphSet: Set.S) (StateSet: Set.S) -> BEUCHI

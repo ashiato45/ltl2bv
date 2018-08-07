@@ -19,5 +19,5 @@ let () =
    * let ws = w |> formula_to_beuchi |> Formula.Beuchi.to_dot in
    * print_endline ws; *)
   let input = Sys.argv.(1) in
-  let output = input |> parse |> Option.value_exn |> formula_to_beuchi |> (fun x -> print_endline "conversion is over";x) |> Formula.Beuchi.to_dot in
-  print_endline output
+  let output = input |> parse |> Option.value_exn |> formula_to_beuchi in
+  Printf.printf "%a" Formula.Beuchi.to_dot output

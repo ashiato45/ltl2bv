@@ -12,7 +12,7 @@ module type BEUCHI = sig
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
       init: StateSet.t;
       final: StateSet.t}
-  val to_dot: t -> string
+  val to_dot: Stdio.Out_channel.t -> t -> unit             
 end
 
 module type MAKE = functor (AlphSet: Set.S) (StateSet: Set.S) -> BEUCHI
@@ -28,7 +28,7 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                      trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
                      init: StateSet.t;
                      final: StateSet.t}
-                 let to_dot autom_ =
+                 let to_dot fmt autom_ =
                    let module StateSetElt = struct
                        include StateSet.Elt
                        let compare x y = StateSet.compare (StateSet.singleton x) (StateSet.singleton y)
@@ -42,35 +42,31 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                    let state_to_str s =
                      "S"^(s |> IdMap.find_exn idmap |> string_of_int) in
                      (* s |> [%sexp_of: StateSet.t] |> Sexp.to_string *)
-                   let text =
+                   Printf.fprintf fmt 
                      "digraph beuchi {\n
-                      node [shape=doublecircle];\n" in
-                   let doublecircles =
-                     String.concat ~sep:" "
-                       (autom_.final |> StateSet.to_list |> List.map ~f:state_to_str) in
-                   let text = text ^ doublecircles ^ "\n" in
-                   let text = text ^ "node [shape=circle];\n" in
-                   let nodes =
-                     Util.make_pairs states (autom_.alph |> AlphSet.to_list)
-                     |> List.map ~f:(fun (s, a) ->
-                            autom_.trans s a
-                            |> StateSet.to_list
-                            |> List.map ~f:(fun s_to -> Printf.sprintf "%s -> %s [label=\"%s\"];" (s |> state_to_str) (s_to |> state_to_str) (a |> [%sexp_of: AlphSet.Elt.t] |> Sexp.to_string))
-                            |> String.concat ~sep:"\n"
-                          )
-                     |> String.concat ~sep:"\n"
-                   in
-                   let text = text ^ nodes ^ "\n" in
-                   let starts =
-                     autom_.init
-                     |> StateSet.to_list
-                     |> List.map ~f:(fun sto ->
-                            Printf.sprintf "START -> %s;" (sto |> state_to_str)
-                          )
-                     |> String.concat ~sep:"\n"
-                   in
-                   let text = text ^ starts ^ "\n" in
-                   let text = text ^ "}\n" in
-                   text
+                      node [shape=doublecircle];\n";
+                   let print_list printer fmt xs =
+                     List.iter ~f:(fun x -> Printf.fprintf fmt "%a " printer x) xs in
+                   let print_string fmt s = Printf.fprintf fmt "%s" s in
+                   Printf.fprintf fmt "%a\n" (print_list print_string) (autom_.final |> StateSet.to_list |> List.map ~f:state_to_str);
+                   Printf.fprintf fmt "node [shape=circle];\n";
+                   let alphlist = autom_.alph |> AlphSet.to_list in
+                   states
+                   |> List.iter ~f:(fun s ->
+                          alphlist
+                          |> List.iter ~f:(fun a ->
+                                 autom_.trans s a
+                                 |> StateSet.to_list
+                                 |> List.iter ~f:(fun s_to ->
+                                                  Printf.fprintf fmt "%s -> %s [label=\"%s\"];\n" (s |> state_to_str) (s_to |> state_to_str) (a |> [%sexp_of: AlphSet.Elt.t] |> Sexp.to_string)
+                                      )
+                               )
+                        );
+                   autom_.init
+                   |> StateSet.to_list
+                   |> List.iter ~f:(fun sto ->
+                          Printf.fprintf fmt "START -> %s;\n" (sto |> state_to_str)
+                        );
+                   Printf.fprintf fmt "}\n";
                end: MAKE)
 
