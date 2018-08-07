@@ -10,7 +10,7 @@ module type BEUCHI = sig
       alph: AlphSet.t;
       states: StateSet.t;
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
-      init: StateSet.Elt.t;
+      init: StateSet.t;
       final: StateSet.t}
   val to_dot: t -> string
 end
@@ -26,7 +26,7 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                      alph: AlphSet.t;
                      states: StateSet.t;
                      trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
-                     init: StateSet.Elt.t;
+                     init: StateSet.t;
                      final: StateSet.t}
                  let to_dot autom_ =
                    let module StateSetElt = struct
@@ -61,6 +61,15 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                      |> String.concat ~sep:"\n"
                    in
                    let text = text ^ nodes ^ "\n" in
+                   let starts =
+                     autom_.init
+                     |> StateSet.to_list
+                     |> List.map ~f:(fun sto ->
+                            Printf.sprintf "START -> %s;" (sto |> state_to_str)
+                          )
+                     |> String.concat ~sep:"\n"
+                   in
+                   let text = text ^ starts ^ "\n" in
                    let text = text ^ "}\n" in
                    text
                end: MAKE)

@@ -8,7 +8,7 @@ module type BEUCHI = sig
       alph: AlphSet.t;
       states: StateSet.t;
       trans: StateSet.Elt.t -> AlphSet.Elt.t -> StateSet.t;
-      init: StateSet.Elt.t;
+      init: StateSet.t;
       final: StateSet.t}
   val to_dot: t -> string             
 end

@@ -129,7 +129,7 @@ module Make = (functor (AlphSet: Set.S) (StateSet: Set.S) -> struct
                                                 )
                                          )
                                        in 
-                                       let init = (StateSet.singleton aba_.init, StateSet.empty) in
+                                       let init = BeuchiStateSet.singleton (StateSet.singleton aba_.init, StateSet.empty) in
                                        let final = two_s |> List.map ~f:(fun x -> (StateSet.empty, x)) |> BeuchiStateSet.of_list in
                                        {Beuchi.alph=alph; states=states; trans=trans; init=init; final=final}
                                    end
